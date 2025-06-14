@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDoList</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      .completed p {
+        text-decoration: line-through;
+        color: gray;
+      }
+
+      .status-pending {
+        color: red;
+      }
+
+      .status-done {
+        color: green;
+      }
+
+      .btn {
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="input-container">
+        <h1>My Task Manager</h1>
+        <input type="text" placeholder="Add new task..." id="inputTask" />
+        <input type="button" value="Add" id="addBtn" />
+      </div>
+      <ul class="todolist" id="todoList"></ul>
+    </div>
+
+    <script>
+      const inputTask = document.getElementById("inputTask");
+      const addBtn = document.getElementById("addBtn");
+      const todoList = document.getElementById("todoList");
+
+      let editTodoP = null;
+
+      //adding task
+      const addToDo = () => {
+        const inputText = inputTask.value.trim();
+        if (inputText.length <= 0) 
+        {
+          alert("You must enter some todo...!");
+          return false;
+        }
+
+        if (addBtn.value === "Save") 
+        {
+          editLocalTodos(editTodoP.innerHTML, inputText);
+          editTodoP.innerHTML = inputText;
+          addBtn.value = "Add";
+          inputTask.value = "";
+          editTodoP = null;
+          return false;
+        }
+
+        createTodoElement(inputText);
+        saveLocalTodos(inputText);
+        inputTask.value = "";
+      };
+
+      //to create task, passing the text and initial status 
+      const createTodoElement = (text,completed = false,status = "Pending") => {
+        const li = document.createElement("li");
+        if (completed) li.classList.add("completed");
+
+        const p = document.createElement("p");
+        p.innerHTML = text;
+        li.appendChild(p);
+
+        const statusSpan = document.createElement("span");
+        statusSpan.innerText = `Status: ${status}`;
+        statusSpan.className =
+          status === "Done" ? "status-done" : "status-pending";
+        li.appendChild(statusSpan);
+
+        const statusBtn = document.createElement("button");
+        statusBtn.innerText = "Toggle Status";
+        statusBtn.classList.add("btn");
+        li.appendChild(statusBtn);
+
+        const markasCompletedBtn = document.createElement("button");
+        markasCompletedBtn.innerText = "Mark As Completed";
+        markasCompletedBtn.classList.add("btn");
+        li.appendChild(markasCompletedBtn);
+
+        const editBtn = document.createElement("button");
+        editBtn.innerText = "Edit";
+        editBtn.classList.add("btn");
+        li.appendChild(editBtn);
+
+        const deltBtn = document.createElement("button");
+        deltBtn.innerText = "Delete";
+        deltBtn.classList.add("btn");
+        li.appendChild(deltBtn);
+
+        todoList.appendChild(li);
+      };
+
+      //updating todo with various task
+      const updateTodo = (e) => {
+        const li = e.target.parentElement;
+        const p = li.querySelector("p");
+        const statusSpan = li.querySelector("span");
+
+        if (e.target.innerHTML === "Edit") 
+        {
+          inputTask.value = p.innerHTML;
+          inputTask.focus();
+          addBtn.value = "Save";
+          editTodoP = p; // Store reference to <p>
+        } 
+        else if (e.target.innerHTML === "Delete") 
+        {
+          todoList.removeChild(li);
+          deleteLocalTodo(p.innerHTML);
+        } 
+        else if (e.target.innerHTML === "Mark As Completed") 
+        {
+          li.classList.toggle("completed");
+        }
+        else if (e.target.innerHTML === "Toggle Status") 
+        {
+          if (statusSpan.innerText.includes("Pending")) 
+          {
+            statusSpan.innerText = "Status: Done";
+            statusSpan.className = "status-done";
+          } 
+          else 
+          {
+            statusSpan.innerText = "Status: Pending";
+            statusSpan.className = "status-pending";
+          }
+        }
+      };
+
+      //local storage actions
+      const saveLocalTodos = (todo) => {
+        //if there existing todos, get them
+        let todos = localStorage.getItem("todos")
+          ? JSON.parse(localStorage.getItem("todos"))
+          : [];
+        todos.push(todo);
+        localStorage.setItem("todos", JSON.stringify(todos));
+      };
+
+      const getLocalTodos = () => {
+        let todos = localStorage.getItem("todos")
+          ? JSON.parse(localStorage.getItem("todos"))
+          : [];
+        todos.forEach((todo) => {
+          createTodoElement(todo);
+        });
+      };
+
+      const deleteLocalTodo = (todoText) => {
+        let todos = localStorage.getItem("todos")
+          ? JSON.parse(localStorage.getItem("todos"))
+          : [];
+        let index = todos.indexOf(todoText);
+        if (index > -1) {
+          todos.splice(index, 1);
+        }
+        localStorage.setItem("todos", JSON.stringify(todos));
+      };
+
+      const editLocalTodos = (oldText, newText) => {
+        let todos = JSON.parse(localStorage.getItem("todos"));
+        let index = todos.indexOf(oldText);
+        if (index > -1) {
+          todos[index] = newText;
+          localStorage.setItem("todos", JSON.stringify(todos));
+        }
+      };
+
+      //document onload functioning
+      document.addEventListener("DOMContentLoaded", getLocalTodos);
+      addBtn.addEventListener("click", addToDo);
+      todoList.addEventListener("click", updateTodo);
+
+    </script>
+  </body>
+</html>
